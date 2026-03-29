@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Webhook Gateway{% endblock %}
+{% block content %}
+<h1>Webhook Log</h1>
+<p class="meta">{{ total }} webhooks received | {{ endpoints|length }} endpoints configured</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Time (ms)</th>
+            <th>Payload Preview</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for wh in webhooks %}
+        <tr class="status-{{ 'ok' if wh.forward_status and wh.forward_status < 400 else 'error' }}">
+            <td title="{{ wh.received_at }}">{{ wh.received_at[:19] }}</td>
+            <td><span class="badge badge-{{ wh.source_type }}">{{ wh.source_type }}</span></td>
+            <td>{{ wh.forward_status or '—' }}</td>
+            <td>{{ wh.processing_ms or '—' }}</td>
+            <td class="payload-preview">
+                {% if wh.payload %}
+                    {{ wh.payload.get('title', wh.payload.get('action', '')) | truncate(60) if wh.payload is mapping else '—' }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No webhooks received yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

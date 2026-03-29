@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Endpoints — Webhook Gateway{% endblock %}
+{% block content %}
+<h1>Endpoints</h1>
+
+<div class="card">
+    <h2>Add Endpoint</h2>
+    <form method="post" action="/api/endpoints" id="add-form">
+        <div class="form-row">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required placeholder="e.g. GitHub CI">
+        </div>
+        <div class="form-row">
+            <label for="source_type">Source Type</label>
+            <select id="source_type" name="source_type">
+                {% for st in source_types %}
+                <option value="{{ st }}">{{ st }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="secret">Secret (optional)</label>
+            <input type="text" id="secret" name="secret" placeholder="Webhook secret for signature validation">
+        </div>
+        <div class="form-row">
+            <label for="forward_url">Forward URL</label>
+            <input type="text" id="forward_url" name="forward_url" value="http://localhost:4000/api/events">
+        </div>
+        <button type="submit">Add Endpoint</button>
+    </form>
+</div>
+
+<h2>Configured Endpoints</h2>
+<p class="meta">Webhooks are received at <code>POST /webhook/{source_type}</code></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Source</th>
+            <th>Forward URL</th>
+            <th>Secret</th>
+            <th>Enabled</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ep in endpoints %}
+        <tr>
+            <td>{{ ep.name }}</td>
+            <td><span class="badge badge-{{ ep.source_type }}">{{ ep.source_type }}</span></td>
+            <td class="mono">{{ ep.forward_url }}</td>
+            <td>{{ '***' if ep.secret else '—' }}</td>
+            <td>{{ 'Yes' if ep.enabled else 'No' }}</td>
+            <td>
+                <button class="btn-delete"
+                    onclick="deleteEndpoint('{{ ep.id }}')">Delete</button>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">No endpoints configured.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+const GATEWAY_TOKEN = '';
+
+async function deleteEndpoint(id) {
+    if (!confirm('Delete this endpoint?')) return;
+    const headers = {'Content-Type': 'application/json'};
+    if (GATEWAY_TOKEN) headers['Authorization'] = 'Bearer ' + GATEWAY_TOKEN;
+    await fetch('/api/endpoints/' + id, { method: 'DELETE', headers });
+    location.reload();
+}
+
+document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {
+        name: form.name.value,
+        source_type: form.source_type.value,
+        forward_url: form.forward_url.value,
+    };
+    if (form.secret.value) data.secret = form.secret.value;
+    const headers = {'Content-Type': 'application/json'};
+    if (GATEWAY_TOKEN) headers['Authorization'] = 'Bearer ' + GATEWAY_TOKEN;
+    const resp = await fetch('/api/endpoints', {
+        method: 'POST', headers, body: JSON.stringify(data),
+    });
+    if (resp.ok) location.reload();
+    else alert('Error: ' + (await resp.text()));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+services:
+  webhook-gateway:
+    build: .
+    container_name: webhook-gateway
+    ports:
+      - "4100:4100"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WEBHOOK_DB_PATH=/data/webhook-gateway.db
+      - ALERTA_URL=${ALERTA_URL:-http://host.docker.internal:4000}
+      - ALERTA_TOKEN=${ALERTA_TOKEN:-}
+      - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - gateway-data:/data
+    restart: unless-stopped
+
+volumes:
+  gateway-data:

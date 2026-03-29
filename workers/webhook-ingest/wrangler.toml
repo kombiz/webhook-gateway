@@ -1,0 +1,16 @@
+name = "webhook-ingest"
+main = "src/index.ts"
+compatibility_date = "2025-03-28"
+
+# Custom domain — Cloudflare manages DNS and SSL automatically
+# Worker IS the origin (no separate backend needed for this hostname)
+[[routes]]
+pattern = "hooks.onlyarag.com"
+custom_domain = true
+
+[vars]
+WEBHOOK_GATEWAY_URL = "https://webhook-tunnel.onlyarag.com"
+
+# Secrets (set via `wrangler secret put`):
+# GATEWAY_TOKEN — bearer token for the gateway API
+# GITHUB_WEBHOOK_SECRET — for GitHub signature validation (optional, gateway validates too)

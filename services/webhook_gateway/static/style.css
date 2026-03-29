@@ -1,0 +1,48 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1117; color: #e1e4e8; line-height: 1.5;
+}
+nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.5rem; background: #161b22; border-bottom: 1px solid #30363d;
+}
+.nav-brand { font-weight: 700; font-size: 1.1rem; color: #58a6ff; text-decoration: none; }
+.nav-links a { color: #8b949e; text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; }
+.nav-links a:hover { color: #e1e4e8; }
+main { max-width: 1000px; margin: 1.5rem auto; padding: 0 1rem; }
+h1 { margin-bottom: 0.5rem; font-size: 1.5rem; }
+h2 { margin: 1.5rem 0 0.75rem; font-size: 1.2rem; color: #c9d1d9; }
+.meta { color: #8b949e; margin-bottom: 1rem; font-size: 0.9rem; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; }
+th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #21262d; }
+th { color: #8b949e; font-weight: 600; background: #161b22; }
+tr:hover { background: #161b22; }
+.status-ok td:nth-child(3) { color: #3fb950; }
+.status-error td:nth-child(3) { color: #f85149; }
+.badge {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px;
+    font-size: 0.75rem; font-weight: 600;
+}
+.badge-github { background: #1f2937; color: #58a6ff; }
+.badge-slack { background: #1f2937; color: #e9a820; }
+.badge-prometheus { background: #1f2937; color: #e6522c; }
+.badge-generic { background: #1f2937; color: #8b949e; }
+.payload-preview { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8b949e; }
+.mono { font-family: monospace; font-size: 0.8rem; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.form-row { margin-bottom: 0.75rem; }
+.form-row label { display: block; font-size: 0.85rem; color: #8b949e; margin-bottom: 0.25rem; }
+.form-row input, .form-row select {
+    width: 100%; padding: 0.4rem 0.6rem; background: #0d1117;
+    border: 1px solid #30363d; border-radius: 4px; color: #e1e4e8; font-size: 0.85rem;
+}
+button, .btn-delete {
+    padding: 0.4rem 0.8rem; background: #238636; color: #fff;
+    border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+}
+button:hover { background: #2ea043; }
+.btn-delete { background: #da3633; }
+.btn-delete:hover { background: #f85149; }
+.empty { text-align: center; color: #484f58; padding: 2rem; }
+code { background: #161b22; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
