@@ -7,6 +7,7 @@ class SourceType(StrEnum):
     SLACK = "slack"
     PROMETHEUS = "prometheus"
     GENERIC = "generic"
+    MELTWATER = "meltwater"
 
 class EndpointCreate(BaseModel):
     name: str

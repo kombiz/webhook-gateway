@@ -29,6 +29,16 @@ CREATE TABLE IF NOT EXISTS webhook_log (
 );
 CREATE INDEX IF NOT EXISTS idx_webhook_log_received ON webhook_log(received_at DESC);
 CREATE INDEX IF NOT EXISTS idx_webhook_log_endpoint ON webhook_log(endpoint_id);
+
+CREATE TABLE IF NOT EXISTS meltwater_inbox (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    received_at TEXT NOT NULL,
+    headers TEXT,
+    payload TEXT NOT NULL,
+    processed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_meltwater_inbox_unprocessed
+    ON meltwater_inbox(received_at DESC) WHERE processed_at IS NULL;
 """
 
 class Database:
@@ -138,6 +148,32 @@ class Database:
         cursor = await self._conn.execute("SELECT COUNT(*) FROM webhook_log")
         row = await cursor.fetchone()
         return row[0]
+
+    async def persist_meltwater_inbox(self, headers: dict, payload: dict) -> bool:
+        await self._conn.execute(
+            "INSERT INTO meltwater_inbox (received_at, headers, payload) VALUES (?, ?, ?)",
+            (self._now(), json.dumps(headers), json.dumps(payload)),
+        )
+        await self._conn.commit()
+        return True
+
+    async def list_meltwater_inbox(self, limit: int = 50, unprocessed_only: bool = True) -> list[dict]:
+        sql = "SELECT * FROM meltwater_inbox"
+        if unprocessed_only:
+            sql += " WHERE processed_at IS NULL"
+        sql += " ORDER BY received_at DESC LIMIT ?"
+        cursor = await self._conn.execute(sql, (limit,))
+        rows = await cursor.fetchall()
+        return [
+            {
+                "id": r["id"],
+                "received_at": r["received_at"],
+                "headers": json.loads(r["headers"]) if r["headers"] else None,
+                "payload": json.loads(r["payload"]) if r["payload"] else None,
+                "processed_at": r["processed_at"],
+            }
+            for r in rows
+        ]
 
     def _row_to_endpoint(self, row) -> EndpointResponse:
         return EndpointResponse(

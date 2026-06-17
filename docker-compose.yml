@@ -7,14 +7,25 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WEBHOOK_DB_PATH=/data/webhook-gateway.db
+      # Alerta destination
       - ALERTA_URL=${ALERTA_URL:-http://host.docker.internal:4000}
       - ALERTA_TOKEN=${ALERTA_TOKEN:-}
+      # Mattermost destination
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL:-}
+      - MATTERMOST_CHANNEL=${MATTERMOST_CHANNEL:-}
+      # Auth between Cloudflare Worker and gateway
       - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - gateway-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx, sys; sys.exit(0 if httpx.get('http://localhost:4100/health').status_code == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   gateway-data:

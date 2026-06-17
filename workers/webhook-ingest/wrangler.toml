@@ -2,15 +2,22 @@ name = "webhook-ingest"
 main = "src/index.ts"
 compatibility_date = "2025-03-28"
 
-# Custom domain — Cloudflare manages DNS and SSL automatically
-# Worker IS the origin (no separate backend needed for this hostname)
+# Custom domain — Cloudflare manages DNS and SSL automatically.
 [[routes]]
 pattern = "hooks.onlyarag.com"
 custom_domain = true
 
-[vars]
-WEBHOOK_GATEWAY_URL = "https://webhook-tunnel.onlyarag.com"
+# KV namespace holds per-provider config (secret, forward_to, headers).
+# Populate via `scripts/populate-kv.sh` (or cloudflare-pp-cli).
+[[kv_namespaces]]
+binding = "WEBHOOK_ROUTES"
+id = "0acf841b1f5f46a581dfd241a7e3b3a2"
 
-# Secrets (set via `wrangler secret put`):
-# GATEWAY_TOKEN — bearer token for the gateway API
-# GITHUB_WEBHOOK_SECRET — for GitHub signature validation (optional, gateway validates too)
+[vars]
+# Override the gateway base URL in production; the tunneled hostname
+# stays the public-facing entry point while the gateway talks to it
+# over the cloudflared connection.
+GATEWAY_BASE_URL = "https://webhook-tunnel.onlyarag.com"
+
+# Secrets (set via `wrangler secret put` or cloudflare-pp-cli):
+# GATEWAY_TOKEN — bearer token forwarded to the gateway on every request
