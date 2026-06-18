@@ -6,6 +6,7 @@ The gateway emits to *both* destinations when configured:
 - Meltwater payloads are additionally persisted to a dedicated ``meltwater_inbox``
   table so the Meltwater repo can pick them up asynchronously.
 """
+
 import json
 from dataclasses import dataclass
 
@@ -63,7 +64,9 @@ class Forwarder:
             event = self._normalize_meltwater(payload)
         else:
             event = self._normalize_generic(payload)
-        event["source"] = ALERTA_SOURCE_MAP.get(event.get("source", ""), "generic_webhook")
+        event["source"] = ALERTA_SOURCE_MAP.get(
+            event.get("source", ""), "generic_webhook"
+        )
         return event
 
     async def forward(
@@ -110,9 +113,14 @@ class Forwarder:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(url, json=event, headers=headers)
-                if resp.status_code in (301, 302, 307, 308) and "location" in resp.headers:
+                if (
+                    resp.status_code in (301, 302, 307, 308)
+                    and "location" in resp.headers
+                ):
                     resp = await client.post(
-                        resp.headers["location"], json=event, headers=headers,
+                        resp.headers["location"],
+                        json=event,
+                        headers=headers,
                     )
                 return resp.status_code, resp.text
         except Exception as e:
@@ -131,14 +139,19 @@ class Forwarder:
             return 502, str(e)
 
     def _build_mattermost_message(
-        self, source_type: str, event: dict, payload: dict,
+        self,
+        source_type: str,
+        event: dict,
+        payload: dict,
     ) -> dict:
         title = event.get("title", "Webhook event")
         body = event.get("body", "")
         severity = event.get("severity", "info")
-        icon = {"critical": ":rotating_light:", "warning": ":warning:", "info": ":information_source:"}.get(
-            severity, ":information_source:"
-        )
+        icon = {
+            "critical": ":rotating_light:",
+            "warning": ":warning:",
+            "info": ":information_source:",
+        }.get(severity, ":information_source:")
         text = f"{icon} **{title}**\n{body}\n\n_Source: {source_type} • Severity: {severity}_"
         return {"text": text}
 
@@ -150,55 +163,98 @@ class Forwarder:
         if event_type == "push":
             pusher = payload.get("pusher", {}).get("name", "unknown")
             msg = payload.get("head_commit", {}).get("message", "")
-            return {"title": f"Push to {repo}", "body": f"{pusher} pushed: {msg}",
-                    "severity": "info", "source": "github", "tags": ["github", "push", repo]}
+            return {
+                "title": f"Push to {repo}",
+                "body": f"{pusher} pushed: {msg}",
+                "severity": "info",
+                "source": "github",
+                "tags": ["github", "push", repo],
+            }
         if event_type == "issues":
             action = payload.get("action", "")
             issue = payload.get("issue", {})
-            return {"title": f"Issue {action}: {issue.get('title', '')} #{issue.get('number', '')}",
-                    "body": issue.get("html_url", ""), "severity": "warning",
-                    "source": "github", "tags": ["github", "issue", repo]}
+            return {
+                "title": f"Issue {action}: {issue.get('title', '')} #{issue.get('number', '')}",
+                "body": issue.get("html_url", ""),
+                "severity": "warning",
+                "source": "github",
+                "tags": ["github", "issue", repo],
+            }
         if event_type == "pull_request":
             action = payload.get("action", "")
             pr = payload.get("pull_request", {})
-            return {"title": f"PR {action}: {pr.get('title', '')} #{pr.get('number', '')}",
-                    "body": pr.get("html_url", ""), "severity": "info",
-                    "source": "github", "tags": ["github", "pr", repo]}
+            return {
+                "title": f"PR {action}: {pr.get('title', '')} #{pr.get('number', '')}",
+                "body": pr.get("html_url", ""),
+                "severity": "info",
+                "source": "github",
+                "tags": ["github", "pr", repo],
+            }
         if event_type == "workflow_run":
             wf = payload.get("workflow_run", {})
             conclusion = wf.get("conclusion", "unknown")
             severity = "critical" if conclusion == "failure" else "info"
-            return {"title": f"Workflow {wf.get('name', '')}: {conclusion}",
-                    "body": wf.get("html_url", ""), "severity": severity,
-                    "source": "github", "tags": ["github", "ci", repo]}
-        return {"title": f"GitHub {event_type} on {repo}",
-                "body": str(payload.get("action", "")), "severity": "info",
-                "source": "github", "tags": ["github", event_type, repo]}
+            return {
+                "title": f"Workflow {wf.get('name', '')}: {conclusion}",
+                "body": wf.get("html_url", ""),
+                "severity": severity,
+                "source": "github",
+                "tags": ["github", "ci", repo],
+            }
+        return {
+            "title": f"GitHub {event_type} on {repo}",
+            "body": str(payload.get("action", "")),
+            "severity": "info",
+            "source": "github",
+            "tags": ["github", event_type, repo],
+        }
 
     def _normalize_prometheus(self, payload: dict) -> dict:
         alerts = payload.get("alerts", [])
         if not alerts:
-            return {"title": "Prometheus alert (empty)", "body": "",
-                    "severity": "info", "source": "prometheus", "tags": ["prometheus"]}
+            return {
+                "title": "Prometheus alert (empty)",
+                "body": "",
+                "severity": "info",
+                "source": "prometheus",
+                "tags": ["prometheus"],
+            }
         alert = alerts[0]
         labels = alert.get("labels", {})
         annotations = alert.get("annotations", {})
-        return {"title": f"Alert: {labels.get('alertname', 'unknown')}",
-                "body": annotations.get("summary", annotations.get("description", "")),
-                "severity": "warning" if alert.get("status") == "firing" else "info",
-                "source": "prometheus",
-                "tags": ["prometheus", labels.get("alertname", ""), labels.get("instance", "")]}
+        return {
+            "title": f"Alert: {labels.get('alertname', 'unknown')}",
+            "body": annotations.get("summary", annotations.get("description", "")),
+            "severity": "warning" if alert.get("status") == "firing" else "info",
+            "source": "prometheus",
+            "tags": [
+                "prometheus",
+                labels.get("alertname", ""),
+                labels.get("instance", ""),
+            ],
+        }
 
     def _normalize_slack(self, payload: dict) -> dict:
-        text = payload.get("text") or payload.get("message") or json.dumps(payload)[:200]
-        return {"title": "Slack event", "body": text, "severity": "info",
-                "source": "slack", "tags": ["slack"]}
+        text = (
+            payload.get("text") or payload.get("message") or json.dumps(payload)[:200]
+        )
+        return {
+            "title": "Slack event",
+            "body": text,
+            "severity": "info",
+            "source": "slack",
+            "tags": ["slack"],
+        }
 
     def _normalize_meltwater(self, payload: dict) -> dict:
         # Meltwater doesn't map naturally to an alerting event — we forward
         # the raw payload to the inbox and emit a low-severity Alerta event
         # for visibility. The real processing happens in the meltwater repo.
-        count = payload.get("count") or (len(payload.get("documents", [])) if isinstance(payload.get("documents"), list) else 0)
+        count = payload.get("count") or (
+            len(payload.get("documents", []))
+            if isinstance(payload.get("documents"), list)
+            else 0
+        )
         return {
             "title": f"Meltwater mention batch ({count} hits)",
             "body": json.dumps(payload)[:512],
@@ -208,11 +264,13 @@ class Forwarder:
         }
 
     def _normalize_generic(self, payload: dict) -> dict:
-        return {"title": payload.get("title", "Webhook event"),
-                "body": payload.get("body", ""),
-                "severity": payload.get("severity", "info"),
-                "source": payload.get("source", "generic"),
-                "tags": payload.get("tags", ["generic"])}
+        return {
+            "title": payload.get("title", "Webhook event"),
+            "body": payload.get("body", ""),
+            "severity": payload.get("severity", "info"),
+            "source": payload.get("source", "generic"),
+            "tags": payload.get("tags", ["generic"]),
+        }
 
 
 # Backward-compat alias so existing imports keep working.

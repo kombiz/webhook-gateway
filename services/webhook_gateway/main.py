@@ -1,4 +1,5 @@
 """Webhook Gateway — receives, logs, persists, and forwards webhooks to Alerta and Mattermost."""
+
 import os
 import time
 from contextlib import asynccontextmanager
@@ -72,6 +73,7 @@ def require_auth(request: Request):
 
 # ── Health ──────────────────────────────────────────────
 
+
 @app.get("/health")
 async def health():
     return {
@@ -84,6 +86,7 @@ async def health():
 
 # ── Web UI ──────────────────────────────────────────────
 
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     db = get_db()
@@ -91,10 +94,18 @@ async def dashboard(request: Request):
     total = await db.count_webhooks()
     endpoints = [ep.model_dump() for ep in await db.list_endpoints()]
     if templates:
-        return templates.TemplateResponse(request, "dashboard.html", context={
-            "webhooks": webhooks, "total": total, "endpoints": endpoints,
-        })
-    return HTMLResponse("<html><body><h1>Webhook Gateway</h1><p>Templates not loaded.</p></body></html>")
+        return templates.TemplateResponse(
+            request,
+            "dashboard.html",
+            context={
+                "webhooks": webhooks,
+                "total": total,
+                "endpoints": endpoints,
+            },
+        )
+    return HTMLResponse(
+        "<html><body><h1>Webhook Gateway</h1><p>Templates not loaded.</p></body></html>"
+    )
 
 
 @app.get("/endpoints", response_class=HTMLResponse)
@@ -102,13 +113,21 @@ async def endpoints_page(request: Request):
     db = get_db()
     endpoints = [ep.model_dump() for ep in await db.list_endpoints()]
     if templates:
-        return templates.TemplateResponse(request, "endpoints.html", context={
-            "endpoints": endpoints, "source_types": [s.value for s in SourceType],
-        })
-    return HTMLResponse("<html><body><h1>Endpoints</h1><p>Templates not loaded.</p></body></html>")
+        return templates.TemplateResponse(
+            request,
+            "endpoints.html",
+            context={
+                "endpoints": endpoints,
+                "source_types": [s.value for s in SourceType],
+            },
+        )
+    return HTMLResponse(
+        "<html><body><h1>Endpoints</h1><p>Templates not loaded.</p></body></html>"
+    )
 
 
 # ── Webhook Receive ────────────────────────────────────
+
 
 @app.post("/webhook/{source}")
 async def receive_webhook(source: str, request: Request):
@@ -135,8 +154,12 @@ async def receive_webhook(source: str, request: Request):
         elapsed_ms = int((time.monotonic() - start) * 1000)
         await db.log_webhook(
             endpoint_id=endpoint.id if endpoint else None,
-            source_type=source, headers=headers, payload=payload,
-            forward_status=502, forward_response=str(e), processing_ms=elapsed_ms,
+            source_type=source,
+            headers=headers,
+            payload=payload,
+            forward_status=502,
+            forward_response=str(e),
+            processing_ms=elapsed_ms,
         )
         return JSONResponse(
             status_code=502,
@@ -149,8 +172,11 @@ async def receive_webhook(source: str, request: Request):
 
     await db.log_webhook(
         endpoint_id=endpoint.id if endpoint else None,
-        source_type=source, headers=headers, payload=payload,
-        forward_status=forward_status, forward_response=forward_response,
+        source_type=source,
+        headers=headers,
+        payload=payload,
+        forward_status=forward_status,
+        forward_response=forward_response,
         processing_ms=elapsed_ms,
     )
 
@@ -188,6 +214,7 @@ def _validate_signature(source: str, body: bytes, headers: dict, secret: str) ->
 
 # ── Endpoint CRUD API ──────────────────────────────────
 
+
 @app.get("/api/endpoints")
 async def list_endpoints_api(request: Request, _=Depends(require_auth)):
     db = get_db()
@@ -196,14 +223,18 @@ async def list_endpoints_api(request: Request, _=Depends(require_auth)):
 
 
 @app.post("/api/endpoints", status_code=201)
-async def create_endpoint(ep: EndpointCreate, request: Request, _=Depends(require_auth)):
+async def create_endpoint(
+    ep: EndpointCreate, request: Request, _=Depends(require_auth)
+):
     db = get_db()
     created = await db.create_endpoint(ep)
     return created.model_dump()
 
 
 @app.put("/api/endpoints/{ep_id}")
-async def update_endpoint(ep_id: str, ep: EndpointUpdate, request: Request, _=Depends(require_auth)):
+async def update_endpoint(
+    ep_id: str, ep: EndpointUpdate, request: Request, _=Depends(require_auth)
+):
     db = get_db()
     updated = await db.update_endpoint(ep_id, **ep.model_dump(exclude_none=True))
     if not updated:
@@ -219,13 +250,16 @@ async def delete_endpoint_api(ep_id: str, request: Request, _=Depends(require_au
 
 
 @app.get("/api/webhooks")
-async def list_webhooks_api(request: Request, limit: int = 50, offset: int = 0, _=Depends(require_auth)):
+async def list_webhooks_api(
+    request: Request, limit: int = 50, offset: int = 0, _=Depends(require_auth)
+):
     db = get_db()
     logs = await db.list_webhooks(limit=limit, offset=offset)
     return [log.model_dump() for log in logs]
 
 
 # ── Meltwater inbox ────────────────────────────────────
+
 
 @app.get("/api/meltwater/inbox")
 async def meltwater_inbox(
@@ -240,4 +274,5 @@ async def meltwater_inbox(
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=4100)

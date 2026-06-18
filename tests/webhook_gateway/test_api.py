@@ -1,10 +1,9 @@
 """Tests for webhook gateway API routes."""
-import json
-import hashlib
-import hmac
+
 import pytest
 from fastapi.testclient import TestClient
 import os
+
 os.environ.setdefault("WEBHOOK_DB_PATH", ":memory:")
 os.environ.setdefault("ALERTA_URL", "http://localhost:4000")
 os.environ.setdefault("ALERTA_TOKEN", "test_token")
@@ -12,10 +11,12 @@ os.environ.setdefault("GATEWAY_TOKEN", "gw_test_token")
 
 from services.webhook_gateway.main import app
 
+
 @pytest.fixture
 def client():
     with TestClient(app) as c:
         yield c
+
 
 def test_health(client):
     resp = client.get("/health")
@@ -23,6 +24,7 @@ def test_health(client):
     data = resp.json()
     assert data["status"] == "ok"
     assert data["service"] == "webhook-gateway"
+
 
 def test_create_endpoint(client):
     resp = client.post(
@@ -36,12 +38,14 @@ def test_create_endpoint(client):
     assert data["source_type"] == "github"
     assert "id" in data
 
+
 def test_create_endpoint_unauthorized(client):
     resp = client.post(
         "/api/endpoints",
         json={"name": "Test EP", "source_type": "github"},
     )
     assert resp.status_code == 401
+
 
 def test_list_endpoints(client):
     client.post(
@@ -57,6 +61,7 @@ def test_list_endpoints(client):
     data = resp.json()
     assert len(data) >= 1
 
+
 def test_delete_endpoint(client):
     resp = client.post(
         "/api/endpoints",
@@ -70,6 +75,7 @@ def test_delete_endpoint(client):
     )
     assert del_resp.status_code == 204
 
+
 def test_receive_generic_webhook(client):
     client.post(
         "/api/endpoints",
@@ -81,6 +87,7 @@ def test_receive_generic_webhook(client):
         json={"title": "Test event", "body": "Hello", "severity": "info"},
     )
     assert resp.status_code in (200, 502)
+
 
 def test_list_webhooks_api(client):
     resp = client.get(

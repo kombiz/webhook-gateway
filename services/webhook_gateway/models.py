@@ -1,6 +1,8 @@
 """Pydantic models for webhook gateway."""
+
 from enum import StrEnum
 from pydantic import BaseModel
+
 
 class SourceType(StrEnum):
     GITHUB = "github"
@@ -9,6 +11,7 @@ class SourceType(StrEnum):
     GENERIC = "generic"
     MELTWATER = "meltwater"
 
+
 class EndpointCreate(BaseModel):
     name: str
     source_type: SourceType
@@ -16,11 +19,13 @@ class EndpointCreate(BaseModel):
     forward_url: str = "http://localhost:4000/api/events"
     enabled: bool = True
 
+
 class EndpointUpdate(BaseModel):
     name: str | None = None
     secret: str | None = None
     forward_url: str | None = None
     enabled: bool | None = None
+
 
 class EndpointResponse(BaseModel):
     id: str
@@ -31,6 +36,7 @@ class EndpointResponse(BaseModel):
     enabled: bool
     created_at: str
     updated_at: str
+
 
 class WebhookLogEntry(BaseModel):
     id: str
