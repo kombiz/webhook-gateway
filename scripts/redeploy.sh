@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Force a redeploy of the webhook-gateway Dokploy compose service.
 #
-# Normal deploys are automatic: Dokploy's GitHub App redeploys on every push to
-# `main` (autoDeploy; enabled 2026-06-17 by exempting /api/deploy/* from
-# Authentik on the jtully edge). Use this only to FORCE a rebuild without a code
-# change (e.g. after editing env vars in the Dokploy UI, or to retry a deploy).
+# This is the working deploy trigger. Push-to-deploy is NOT wired: Dokploy
+# (dokploy.onlyarag.com) resolves only to a Tailscale IP, so GitHub webhooks
+# can't reach it. Run this after merging to `main` (Dokploy clones latest main
+# and rebuilds), or to force a rebuild after editing env vars in the UI.
 #
 # Requires:
 #   DOKPLOY_API_KEY  — Dokploy API key (control.ts:/opt/stacks/greymatter/.env)

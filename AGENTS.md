@@ -40,10 +40,10 @@ truth for ingress.
   `.github/workflows/ci.yml`)
 - Deploy:
   - Worker: `scripts/deploy-worker.sh`
-  - Gateway: **autoDeploy** — pushing to `main` makes Dokploy rebuild on
-    control.ts (webhook exemption added to the jtully edge 2026-06-17). Force a
-    redeploy with `scripts/redeploy.sh` (needs DOKPLOY_API_KEY). Full topology in
-    `docs/DEPLOYMENT.md`.
+  - Gateway: `scripts/redeploy.sh` (needs DOKPLOY_API_KEY) triggers a Dokploy
+    rebuild of latest `main` on control.ts — run after merging. Push-to-deploy is
+    NOT wired (Dokploy is Tailscale-only; GitHub can't reach it). Full topology +
+    blockers in `docs/DEPLOYMENT.md`.
   - KV: `scripts/populate-kv.sh`
 
 ## Where secrets live
