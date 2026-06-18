@@ -1,5 +1,7 @@
 # Webhook Gateway
 
+[![CI](https://github.com/kombiz/webhook-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/kombiz/webhook-gateway/actions/workflows/ci.yml)
+
 A self-hosted webhook gateway that receives webhooks from external services (GitHub, Slack, Prometheus, etc.), logs them, provides a web UI for management, and forwards normalized events to [Alerta](https://github.com/kombiz/alerta).
 
 ## Architecture
