@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Force a redeploy of the webhook-gateway Dokploy compose service.
 #
-# This is the PRIMARY deploy trigger. Dokploy's native push-to-deploy (GitHub
-# App webhook / autoDeploy) does NOT fire in this homelab — its inbound webhook
-# can't reach Dokploy through the Authentik-gated edge — so deploys are kicked
-# off via the API instead. Run after merging to `main` (it makes Dokploy clone
-# the latest main and rebuild), or to retry / force a rebuild after env edits.
+# Normal deploys are automatic: Dokploy's GitHub App redeploys on every push to
+# `main` (autoDeploy; enabled 2026-06-17 by exempting /api/deploy/* from
+# Authentik on the jtully edge). Use this only to FORCE a rebuild without a code
+# change (e.g. after editing env vars in the Dokploy UI, or to retry a deploy).
 #
 # Requires:
 #   DOKPLOY_API_KEY  — Dokploy API key (control.ts:/opt/stacks/greymatter/.env)
