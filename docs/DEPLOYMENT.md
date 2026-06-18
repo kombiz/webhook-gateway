@@ -7,9 +7,9 @@ on `control.ts`. The Cloudflare Worker + tunnel layer is deployed separately
 ## Topology
 
 ```
-push to main ──► Dokploy GitHub App (autoDeploy) ──► clone + docker compose up --build on control.ts
-                                                       │
-GitHub Actions CI (lint + tests) runs in parallel ◄────┘ (advisory signal)
+merge to main ──► GitHub Actions CI (lint + tests)   [GitHub-hosted]
+              └─► scripts/redeploy.sh  →  Dokploy API compose.deploy
+                     └─► Dokploy clones latest main + docker compose up --build on control.ts
 
 Cloudflare Worker (hooks.onlyarag.com)
    └─► tunnel d7981d70… ─► control.ts:4100 ─► webhook-gateway container
@@ -25,7 +25,7 @@ Cloudflare Worker (hooks.onlyarag.com)
 | appName | `webhook-gateway-pdd8eo` |
 | Server | `control.ts` (`xDIyvfN5hlf847sTohuXD`) |
 | Source | GitHub App `nUH-lwgQy…` → `kombiz/webhook-gateway` `main`, `./docker-compose.yml` |
-| autoDeploy | `true` (push to `main` redeploys) |
+| autoDeploy | `true` (set) — but **non-functional**, see CD note below |
 | Host port | `4100` (the Cloudflare tunnel targets `localhost:4100`) |
 | Volume | `webhook-gateway-pdd8eo_gateway-data` → `/data` (SQLite) |
 
@@ -34,12 +34,19 @@ Cloudflare Worker (hooks.onlyarag.com)
 - **CI** — `.github/workflows/ci.yml` runs `ruff check`, `ruff format --check`,
   and `pytest` on every push to `main` and every PR (GitHub-hosted runner, no
   secrets needed).
-- **CD** — Dokploy's GitHub App redeploys on push to `main`. CI and CD run
-  independently; to make deploys *gated* on green CI, either:
-  1. enable branch protection on `main` requiring the `Lint & test` check and
-     develop via PRs, or
-  2. disable Dokploy autoDeploy and trigger `compose.deploy` from a CI job on a
-     tailnet-reachable self-hosted runner.
+- **CD** — `scripts/redeploy.sh` POSTs `compose.deploy` to the Dokploy API,
+  which makes Dokploy clone the latest `main` and rebuild on control.ts. Run it
+  after merging to `main`.
+
+  > **Verified 2026-06-17:** Dokploy's *native* push-to-deploy (GitHub App
+  > webhook / `autoDeploy`) does **not** fire here — the inbound webhook can't
+  > reach Dokploy through the Authentik-gated `dokploy.onlyarag.com` edge (the
+  > same gate that forces API calls onto the `gpu-vm-1.ts:3000` host path).
+  > Pushing to `main` runs CI but does **not** redeploy on its own.
+
+  Fully-automated CD (no manual step) would need either the Dokploy webhook
+  ingress exempted from Authentik (benefits every Dokploy app), or a self-hosted
+  tailnet runner invoking `scripts/redeploy.sh` from a CI job after tests pass.
 
 ## Secrets
 
