@@ -1,6 +1,8 @@
 """Webhook signature validation for different source types."""
+
 import hashlib
 import hmac
+
 
 def verify_github_signature(body: bytes, signature: str | None, secret: str) -> bool:
     """Validate GitHub webhook HMAC-SHA256 signature."""
@@ -8,6 +10,7 @@ def verify_github_signature(body: bytes, signature: str | None, secret: str) -> 
         return False
     expected = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
+
 
 def verify_meltwater_signature(body: bytes, signature: str | None, secret: str) -> bool:
     """Validate Meltwater webhook HMAC-SHA256 signature.
@@ -23,6 +26,7 @@ def verify_meltwater_signature(body: bytes, signature: str | None, secret: str) 
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(raw, expected)
 
+
 def verify_slack_signature(body: bytes, headers: dict, secret: str) -> bool:
     """Validate Slack webhook signature (v0 scheme)."""
     timestamp = headers.get("x-slack-request-timestamp")
@@ -32,6 +36,7 @@ def verify_slack_signature(body: bytes, headers: dict, secret: str) -> bool:
     base = f"v0:{timestamp}:".encode() + body
     expected = "v0=" + hmac.new(secret.encode(), base, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)
+
 
 def verify_generic_token(auth_header: str | None, expected_token: str) -> bool:
     """Validate a simple Bearer token."""

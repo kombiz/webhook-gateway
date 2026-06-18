@@ -36,11 +36,13 @@ truth for ingress.
   2. Adding a normalizer in `services/webhook_gateway/forwarder.py`
   3. Adding a validator in `services/webhook_gateway/signatures.py`
   4. Writing a KV entry
-- Test: `cd services && pytest -q`
+- Test: `pip install -e '.[dev]' && pytest -q` (CI runs ruff + pytest — see
+  `.github/workflows/ci.yml`)
 - Deploy:
   - Worker: `scripts/deploy-worker.sh`
-  - Gateway: `scripts/deploy-dokploy.sh` (requires DOKPLOY_API_KEY +
-    DOKPLOY_PROJECT_ID + DOKPLOY_SERVER_ID in env)
+  - Gateway: **autoDeploy** — pushing to `main` makes Dokploy rebuild on
+    control.ts. Force a rebuild with `scripts/redeploy.sh` (needs
+    DOKPLOY_API_KEY). Full topology in `docs/DEPLOYMENT.md`.
   - KV: `scripts/populate-kv.sh`
 
 ## Where secrets live

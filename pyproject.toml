@@ -23,5 +23,13 @@ dev = [
 requires = ["setuptools>=75.0"]
 build-backend = "setuptools.build_meta"
 
+# The app runs from source (services.webhook_gateway on sys.path), not as an
+# installed package. Declaring no modules disables setuptools auto-discovery —
+# which otherwise fails on the flat layout (services/, workers/, deploy/) — and
+# makes `pip install .` install only the dependencies (matching the Dockerfile).
+[tool.setuptools]
+py-modules = []
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+pythonpath = ["."]
