@@ -40,10 +40,10 @@ truth for ingress.
   `.github/workflows/ci.yml`)
 - Deploy:
   - Worker: `scripts/deploy-worker.sh`
-  - Gateway: `scripts/redeploy.sh` (needs DOKPLOY_API_KEY) triggers a Dokploy
-    rebuild of latest `main` on control.ts — run after merging. Push-to-deploy is
-    NOT wired (Dokploy is Tailscale-only; GitHub can't reach it). Full topology +
-    blockers in `docs/DEPLOYMENT.md`.
+  - Gateway: **auto on push to `main`** — the `ci.yml` deploy job runs on a
+    self-hosted tailnet runner (development.ts) and triggers Dokploy
+    `compose.deploy` after tests pass. `scripts/redeploy.sh` forces a manual
+    redeploy. Topology in `docs/DEPLOYMENT.md`.
   - KV: `scripts/populate-kv.sh`
 
 ## Where secrets live

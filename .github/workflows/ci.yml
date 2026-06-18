@@ -34,3 +34,35 @@ jobs:
 
       - name: Pytest
         run: pytest -q
+
+  deploy:
+    name: Deploy (Dokploy)
+    needs: lint-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, webhook-gateway-tailnet]
+    concurrency:
+      group: deploy-webhook-gateway
+      cancel-in-progress: false
+    steps:
+      - name: Trigger Dokploy redeploy
+        env:
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          DOKPLOY_URL: http://gpu-vm-1.ts:3000
+          COMPOSE_ID: I5_Ypxvm1r9AnMGt1D_RY
+        run: |
+          set -euo pipefail
+          resp=$(curl -sf -X POST "$DOKPLOY_URL/api/compose.deploy" \
+            -H "x-api-key: $DOKPLOY_API_KEY" -H "Content-Type: application/json" \
+            -d "{\"composeId\":\"$COMPOSE_ID\"}")
+          echo "$resp"
+          echo "$resp" | grep -q '"success":true'
+
+      - name: Wait for healthy
+        run: |
+          for i in $(seq 1 25); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 https://webhook-gw.onlyarag.com/health || true)
+            echo "[$((i*6))s] health -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 6
+          done
+          echo "service did not return 200 in time"; exit 1

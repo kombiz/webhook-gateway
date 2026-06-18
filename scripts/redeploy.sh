@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Force a redeploy of the webhook-gateway Dokploy compose service.
 #
-# This is the working deploy trigger. Push-to-deploy is NOT wired: Dokploy
-# (dokploy.onlyarag.com) resolves only to a Tailscale IP, so GitHub webhooks
-# can't reach it. Run this after merging to `main` (Dokploy clones latest main
-# and rebuilds), or to force a rebuild after editing env vars in the UI.
+# Manual / forced redeploy. Normal CD is automatic: the ci.yml deploy job runs
+# on a self-hosted tailnet runner (development.ts) and triggers this same
+# compose.deploy API on every push to `main` after tests pass. Use this to force
+# a rebuild without a code change (e.g. after editing env vars in the UI).
 #
 # Requires:
 #   DOKPLOY_API_KEY  — Dokploy API key (control.ts:/opt/stacks/greymatter/.env)
